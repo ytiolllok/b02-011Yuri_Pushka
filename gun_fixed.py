@@ -22,11 +22,14 @@ img_folder = os.path.join(game_folder, 'img')
 class KeyCheck():
     def __init__(self, state):
         self.state = state
+
     def invert(self):
         self.state = not self.state
+
+
 class Ball():
     def __init__(self, coord, vel, rad=15, color=None):
-        if color == None:
+        if color is None:
             color = (randint(0, 255), randint(0, 255), randint(0, 255))
         self.color = color
         self.coord = coord
@@ -43,14 +46,15 @@ class Ball():
             self.timer += 1
         else:
             self.is_alive = False
-            
+
     def move(self, t_step=1., g=2.):
         self.vel[1] += int(g * t_step)
         for i in range(2):
             self.coord[i] += int(self.vel[i] * t_step)
         self.check_walls()
-        if self.vel[0]**2 + self.vel[1]**2 < 2**2 and self.coord[1] > SCREEN_SIZE[1] - 2*self.rad:
-               self.is_alive = False
+        if self.vel[0]**2 + \
+                self.vel[1]**2 < 2**2 and self.coord[1] > SCREEN_SIZE[1] - 2 * self.rad:
+            self.is_alive = False
 
     def check_walls(self):
         n = [[1, 0], [0, 1]]
@@ -71,15 +75,16 @@ class Ball():
         ans = -vel_perp * coef_perp + vel_par * coef_par
         self.vel = ans.astype(np.int).tolist()
 
+
 class Hirrih(Ball):
-    def __init__(self, coord, vel, rad = 35, color = BLACK):
+    def __init__(self, coord, vel, rad=35, color=BLACK):
         self.coord = coord
         self.vel = vel
         self.rad = rad
-        self.trace =[]
+        self.trace = []
         self.timer = 0
         self.alive = True
-        
+
     def leave_trace(self):
         y = HirTrace(self.coord)
         self.trace.append(y)
@@ -92,13 +97,16 @@ class Hirrih(Ball):
             self.alive = False
             for i in self.trace:
                 i.kill()
-    
+
     def update_trace(self):
         for shadow in self.trace:
             shadow.become_older()
+
     def move(self):
         self.coord[0] += self.vel[0]
         self.coord[1] += self.vel[1]
+
+
 class HirTrace(pg.sprite.Sprite):
     def __init__(self, coord):
         pg.sprite.Sprite.__init__(self)
@@ -108,8 +116,10 @@ class HirTrace(pg.sprite.Sprite):
         self.alive = True
         self.rect.center = self.coord
         self.timer = 0
+
     def draw(self, screen):
         pass
+
     def become_older(self):
         if(self.timer < 7):
             self.timer += 1
@@ -118,8 +128,12 @@ class HirTrace(pg.sprite.Sprite):
             self.kill()
             self.alive = False
            # print('I died')
+
+
 class Table():
     pass
+
+
 class TankSprite(pg.sprite.Sprite):
     def __init__(self, team_color):
         pg.sprite.Sprite.__init__(self)
@@ -134,11 +148,13 @@ class TankSprite(pg.sprite.Sprite):
     def update(self, xcor, ycor):
         self.rect.x = xcor - 70
         self.rect.y = ycor - 30
+
+
 class Gun():
-    def __init__(self, team_color,  
+    def __init__(self, team_color,
                  min_pow=20, max_pow=50):
         self.color = team_color
-        self.coord = [30, SCREEN_SIZE[1]//2]
+        self.coord = [30, SCREEN_SIZE[1] // 2]
         if (self.color == BLUE):
             self.coord[0] = 770
         self.angle = 0
@@ -151,54 +167,58 @@ class Gun():
         self.radius = 30
 
     def hit_target(self, hit_coord):
-        if ((hit_coord[0]-self.coord[0])**2 + (hit_coord[1]-self.coord[1])**2
-            <= (self.radius + 15)**2):
-            self.coord = [30, SCREEN_SIZE[1]//2]
+        if ((hit_coord[0] - self.coord[0])**2 + (hit_coord[1] - \
+            self.coord[1])**2 <= (self.radius + 15)**2):
+            self.coord = [30, SCREEN_SIZE[1] // 2]
             if (self.color == BLUE):
                 self.coord[0] = 770
             return(1)
         else:
             return(0)
-    
 
     def draw(self, screen):
-        end_pos = [self.coord[0] + self.power*np.cos(self.angle), 
-                   self.coord[1] + self.power*np.sin(self.angle)]
+        end_pos = [self.coord[0] + self.power * np.cos(self.angle),
+                   self.coord[1] + self.power * np.sin(self.angle)]
         pg.draw.line(screen, self.color, self.coord, end_pos, 5)
         self.sprite.update(self.coord[0], self.coord[1])
 
     def strike(self):
-        vel = [int(self.power * np.cos(self.angle)), int(self.power * np.sin(self.angle))]
+        vel = [int(self.power * np.cos(self.angle)),
+               int(self.power * np.sin(self.angle))]
         self.active = False
         self.power = self.min_pow
         return Ball(list(self.coord), vel)
 
     def Hirstrike(self):
-        vel = [int(self.power * np.cos(self.angle)), int(self.power * np.sin(self.angle))]
+        vel = [int(self.power * np.cos(self.angle)),
+               int(self.power * np.sin(self.angle))]
         self.active = False
         self.power = self.min_pow
         return Hirrih(list(self.coord), vel)
+
     def move(self):
         if self.active and self.power < self.max_pow:
             self.power += 1
 
     def set_angle(self, mouse_pos):
-        self.angle = np.arctan2(mouse_pos[1] - self.coord[1], 
+        self.angle = np.arctan2(mouse_pos[1] - self.coord[1],
                                 mouse_pos[0] - self.coord[0])
 
 
 class Target():
-    def __init__ (self, screen):
-            self.color = choice(COLORS)
-            self.radius = randint(10, 100)
-            self.coords = [randint(100, 700), randint(100, 500)]
-            self.speed = [randint(-10, 10), randint(-10, 10)]
-            self.screen = screen
+    def __init__(self, screen):
+        self.color = choice(COLORS)
+        self.radius = randint(10, 100)
+        self.coords = [randint(100, 700), randint(100, 500)]
+        self.speed = [randint(-10, 10), randint(-10, 10)]
+        self.screen = screen
+
     def paintcircle(self):
-            pg.draw.circle(self.screen, self.color, self.coords, self.radius)
+        pg.draw.circle(self.screen, self.color, self.coords, self.radius)
+
     def hit_target(self, hit_coords):
-        if ((hit_coords[0]-self.coords[0])**2 + (hit_coords[1]-self.coords[1])**2
-            <= (self.radius + 15)**2):
+        if ((hit_coords[0] - self.coords[0])**2 + (hit_coords[1] - \
+            self.coords[1])**2 <= (self.radius + 15)**2):
             pg.draw.circle(self.screen, BLACK, self.coords, self.radius)
             self.color = choice(COLORS)
             self.radius = randint(10, 100)
@@ -209,6 +229,7 @@ class Target():
             return(1)
         else:
             return(0)
+
     def move(self):
         if (0 < self.coords[0] + self.speed[0] < 800):
             a = 1
@@ -218,16 +239,19 @@ class Target():
             b = 1
         else:
             b = -1
-        self.speed = [a*self.speed[0], b*self.speed[1]]
+        self.speed = [a * self.speed[0], b * self.speed[1]]
         self.coords = [self.coords[0] + self.speed[0],
-        self.coords[1] + self.speed[1]]
+                       self.coords[1] + self.speed[1]]
+
+
 class Bomber(Target):
-    def __init__ (self, screen):
-            self.color = choice(COLORS)
-            self.radius = randint(10, 100)
-            self.coords = [randint(100, 700), 100]
-            self.speed = [randint(-10, 10), 0]
-            self.screen = screen
+    def __init__(self, screen):
+        self.color = choice(COLORS)
+        self.radius = randint(10, 100)
+        self.coords = [randint(100, 700), 100]
+        self.speed = [randint(-10, 10), 0]
+        self.screen = screen
+
     def move(self):
         if (0 < self.coords[0] + self.speed[0] < 800):
             a = 1
@@ -237,37 +261,50 @@ class Bomber(Target):
             b = 1
         else:
             b = -1
-        self.speed = [a*self.speed[0], b*self.speed[1]]
+        self.speed = [a * self.speed[0], b * self.speed[1]]
         self.coords = [self.coords[0] + self.speed[0],
-        self.coords[1] + self.speed[1]]
+                       self.coords[1] + self.speed[1]]
+
     def hit_target(self, hit_coords):
-        if ((hit_coords[0]-self.coords[0])**2 + (hit_coords[1]-self.coords[1])**2
-            <= (self.radius + 15)**2):
+        if ((hit_coords[0] - self.coords[0])**2 + (hit_coords[1] - \
+            self.coords[1])**2 <= (self.radius + 15)**2):
             self.coords = [randint(100, 700), 100]
             pg.display.update()
             return(1)
         else:
             return(0)
-        
+
     def draw(self):
-        pg.draw.polygon(screen, RED, ((self.coords[0] - 20, self.coords[1]), (self.coords[0] + 20, self.coords[1]), (self.coords[0] +20 , self.coords[1] + 10)))
+        pg.draw.polygon(
+            screen,
+            RED,
+            ((self.coords[0] - 20,
+              self.coords[1]),
+             (self.coords[0] + 20,
+              self.coords[1]),
+                (self.coords[0] + 20,
+                 self.coords[1] + 10)))
 
     def bomb(self):
-            return(Bomb(self.coords))
+        return(Bomb(self.coords))
+
+
 class Bomb(Ball):
 
     def __init__(self, coord):
         self.color = BLUE
         self.coord = coord
-        self.vel = [0,0]
+        self.vel = [0, 0]
         self.rad = 10
         self.is_alive = True
         self.timer = 0
+
     def move(self):
         self.coord[0] += self.vel[0]
         self.coord[1] += self.vel[1]
         self.vel[1] += 1
-    
+
+
 class Manager():
     def __init__(self):
         self.guns = [Gun(RED), Gun(BLUE)]
@@ -275,6 +312,7 @@ class Manager():
         self.balls = []
         self.hirrs = []
         self.i = 0
+
     def process(self, events, screen):
         done = self.handle_events(events)
         self.move()
@@ -295,16 +333,16 @@ class Manager():
             bullet.is_alive = not(krug1.hit_target(bullet.coord))
             bullet.is_alive = not(krug2.hit_target(bullet.coord))
             for gun in self.guns:
-                    if(bullet.timer>3):
-                        bullet.is_alive = not(gun.hit_target(bullet.coord))
+                if(bullet.timer > 3):
+                    bullet.is_alive = not(gun.hit_target(bullet.coord))
         for head in self.hirrs:
             bomb1.hit_target(head.coord)
             bomb2.hit_target(head.coord)
-            if (head.timer>3):
+            if (head.timer > 3):
                 for gun in self.guns:
                     gun.hit_target(head.coord)
         return done
-        
+
     def draw(self, screen):
         screen.fill(BLACK)
         for ball in self.balls:
@@ -313,7 +351,8 @@ class Manager():
         for gun in self.guns:
             gun.draw(screen)
         bomb1.draw()
-        bomb2.draw()    
+        bomb2.draw()
+
     def move(self):
         for ball in self.balls:
             ball.move()
@@ -325,17 +364,18 @@ class Manager():
             head.become_older()
             if (head.alive == False):
                 self.hirrs.remove(head)
-                
+
             head.leave_trace()
             head.move()
             head.update_trace()
 
     def bomb_count(self, bober):
-        if(self.i<70):
+        if(self.i < 70):
             self.i += 1
         else:
             self.balls.append(bober.bomb())
             self.i = 0
+
     def check_alive(self):
         dead_balls = []
         for i, ball in enumerate(self.balls):
@@ -344,7 +384,7 @@ class Manager():
 
         for i in reversed(dead_balls):
             self.balls.pop(i)
-    
+
     def handle_events(self, events):
         done = False
         for event in events:
@@ -353,7 +393,7 @@ class Manager():
             if event.type == pg.KEYUP:
                 if event.key == pg.K_LSHIFT:
                     shiftdown.state = False
-             
+
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_UP:
                     self.guns[1].coord[1] -= 15
@@ -380,13 +420,13 @@ class Manager():
                     self.guns[1].active = True
             elif event.type == pg.MOUSEBUTTONUP:
                 if event.button == 1:
-                    if (shiftdown.state == True):
+                    if (shiftdown.state):
                         x = self.guns[0].Hirstrike()
                         self.hirrs.append(x)
                     else:
                         self.balls.append(self.guns[0].strike())
                 if event.button == 3:
-                    if (shiftdown.state == True):
+                    if (shiftdown.state):
                         x = self.guns[1].Hirstrike()
                         self.hirrs.append(x)
                     else:
@@ -397,6 +437,7 @@ class Manager():
                 gun.set_angle(mouse_pos)
 
         return done
+
 
 screen = pg.display.set_mode(SCREEN_SIZE)
 pg.display.set_caption("The gun")
@@ -422,5 +463,3 @@ while not done:
     done = mgr.process(pg.event.get(), screen)
     print()
     pg.display.flip()
-   
-   
